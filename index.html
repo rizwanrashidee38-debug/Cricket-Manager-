@@ -1,7 +1,8 @@
 
         
                     
-                <!DOCTYPE html>
+                                    
+            <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -258,8 +259,41 @@
     const ROLES = ["BAT", "BOWL", "AR", "WK"];
     const OVERSEAS_NATIONS = ["Australia", "England", "South Africa", "New Zealand", "West Indies", "Afghanistan", "Sri Lanka"];
     
-    const FIRST_NAMES = ["Rahul", "Virat", "Rohit", "Jasprit", "Hardik", "Rishabh", "Shubman", "Suryakumar", "Ravindra", "Mohammed", "David", "Steve", "Ben", "Kane", "Trent", "Rashid", "Kieron", "Chris", "Sam", "Jofra", "Pat", "Mitchell", "Glenn", "Quinton", "Kagiso"];
-    const LAST_NAMES = ["Sharma", "Kohli", "Bumrah", "Pandya", "Pant", "Gill", "Yadav", "Jadeja", "Shami", "Warner", "Smith", "Stokes", "Williamson", "Boult", "Khan", "Pollard", "Gayle", "Curran", "Archer", "Cummins", "Starc", "Maxwell", "de Kock", "Rabada"];
+    // Naming Database per Nationality
+    const NAMES = {
+        "India": {
+            first: ["Rahul", "Virat", "Rohit", "Jasprit", "Hardik", "Rishabh", "Shubman", "Suryakumar", "Ravindra", "Mohammed", "Ishan", "Shreyas", "Ruturaj", "Shikhar", "KL", "Sanju", "Yuzvendra", "Kuldeep", "Axar", "Arshdeep", "Bhuvneshwar", "Deepak", "Washington", "Ajinkya", "Cheteshwar"],
+            last: ["Sharma", "Kohli", "Bumrah", "Pandya", "Pant", "Gill", "Yadav", "Jadeja", "Shami", "Iyer", "Gaikwad", "Siraj", "Patel", "Dhawan", "Samson", "Chahal", "Kishan", "Singh", "Kumar", "Chahar", "Sundar", "Rahane", "Pujara", "Ashwin", "Shaw"]
+        },
+        "Australia": {
+            first: ["David", "Steve", "Pat", "Mitchell", "Glenn", "Travis", "Marnus", "Josh", "Cameron", "Marcus", "Adam", "Matthew", "Ashton", "Aaron", "Usman"],
+            last: ["Warner", "Smith", "Cummins", "Starc", "Maxwell", "Head", "Labuschagne", "Hazlewood", "Green", "Stoinis", "Zampa", "Wade", "Agar", "Finch", "Khawaja"]
+        },
+        "England": {
+            first: ["Ben", "Jos", "Joe", "Jonny", "Jofra", "Sam", "Harry", "Mark", "Adil", "Moeen", "Dawid", "Liam", "Chris", "Reece", "Jason"],
+            last: ["Stokes", "Buttler", "Root", "Bairstow", "Archer", "Curran", "Brook", "Wood", "Rashid", "Ali", "Malan", "Livingstone", "Woakes", "Topley", "Roy"]
+        },
+        "South Africa": {
+            first: ["Quinton", "Kagiso", "Aiden", "David", "Anrich", "Lungi", "Heinrich", "Rassie", "Keshav", "Marco", "Temba", "Tabraiz", "Tristan", "Dewald", "Wayne"],
+            last: ["de Kock", "Rabada", "Markram", "Miller", "Nortje", "Ngidi", "Klaasen", "van der Dussen", "Maharaj", "Jansen", "Bavuma", "Shamsi", "Stubbs", "Brevis", "Parnell"]
+        },
+        "New Zealand": {
+            first: ["Kane", "Trent", "Devon", "Daryl", "Tim", "Matt", "Mitchell", "Lockie", "Glenn", "Tom", "Finn", "Ish", "Kyle", "Colin", "Martin"],
+            last: ["Williamson", "Boult", "Conway", "Mitchell", "Southee", "Henry", "Santner", "Ferguson", "Phillips", "Latham", "Allen", "Sodhi", "Jamieson", "de Grandhomme", "Guptill"]
+        },
+        "West Indies": {
+            first: ["Kieron", "Chris", "Nicholas", "Jason", "Andre", "Shai", "Shimron", "Alzarri", "Rovman", "Akeal", "Kyle", "Romario", "Obed", "Evin", "Sunil"],
+            last: ["Pollard", "Gayle", "Pooran", "Holder", "Russell", "Hope", "Hetmyer", "Joseph", "Powell", "Hosein", "Mayers", "Shepherd", "McCoy", "Lewis", "Narine"]
+        },
+        "Afghanistan": {
+            first: ["Rashid", "Mohammad", "Mujeeb", "Fazalhaq", "Rahmanullah", "Naveen", "Najibullah", "Hashmatullah", "Gulbadin", "Noor", "Azmatullah", "Qais", "Ibrahim", "Karim", "Hazratullah"],
+            last: ["Khan", "Nabi", "Ur Rahman", "Farooqi", "Gurbaz", "ul-Haq", "Zadran", "Shahidi", "Naib", "Ahmad", "Omarzai", "Ahmadzai", "Janat", "Zazai", "Kamawal"]
+        },
+        "Sri Lanka": {
+            first: ["Wanindu", "Pathum", "Kusal", "Dasun", "Maheesh", "Dushmantha", "Charith", "Dhananjaya", "Matheesha", "Dilshan", "Angelo", "Bhanuka", "Lahiru", "Nuwan", "Pramod"],
+            last: ["Hasaranga", "Nissanka", "Mendis", "Shanaka", "Theekshana", "Chameera", "Asalanka", "de Silva", "Pathirana", "Madushanka", "Mathews", "Rajapaksa", "Kumara", "Thushara", "Madushan"]
+        }
+    };
 
     // State Variables
     let teams = [];
@@ -270,23 +304,30 @@
     let currentBidAmount = 0;
     let highestBidderId = -1;
     let userHasPassed = false;
-    let auctionInterval = null;
     let bidTimeout = null;
 
     // --- INITIALIZATION ---
+    function getRandomName(nation) {
+        let firsts = NAMES[nation].first;
+        let lasts = NAMES[nation].last;
+        let fn = firsts[Math.floor(Math.random() * firsts.length)];
+        let ln = lasts[Math.floor(Math.random() * lasts.length)];
+        return `${fn} ${ln}`;
+    }
+
     function generatePlayerPool(count) {
         let pool = [];
         for (let i = 1; i <= count; i++) {
-            let fn = FIRST_NAMES[Math.floor(Math.random() * FIRST_NAMES.length)];
-            let ln = LAST_NAMES[Math.floor(Math.random() * LAST_NAMES.length)];
             let role = ROLES[Math.floor(Math.random() * ROLES.length)];
             let isOverseas = Math.random() > 0.7; // ~30% are overseas
             let nation = isOverseas ? OVERSEAS_NATIONS[Math.floor(Math.random() * OVERSEAS_NATIONS.length)] : "India";
+            
+            let name = getRandomName(nation);
             let basePrice = (Math.floor(Math.random() * 4) + 1) * 10; // 10L, 20L, 30L, 40L
             
             pool.push({
                 id: i,
-                name: `${fn} ${ln}`,
+                name: name,
                 role: role,
                 isOverseas: isOverseas,
                 nation: nation,
@@ -315,7 +356,6 @@
         initTeams();
         playerPool = generatePlayerPool(350); 
         
-        updateDashboard();
         startNextPlayer();
     }
 
@@ -333,7 +373,6 @@
             let span = document.getElementById(`req-${role}`);
             span.innerText = `${count} / ${req}`;
             
-            // Allow flexibility: if it's OS, max is 3, others are minimums
             if (role === 'OS') {
                 span.className = count <= req ? 'met' : 'unmet';
             } else {
@@ -345,6 +384,8 @@
     }
 
     function validateUserControls() {
+        if (!activePlayer) return;
+
         let myTeam = teams[myTeamId];
         let btnBid = document.getElementById('btn-bid');
         let btnPass = document.getElementById('btn-pass');
@@ -362,7 +403,7 @@
         } else if (myTeam.purse < nextBid) {
             btnBid.disabled = true;
             btnBid.innerText = "Insufficient Funds";
-        } else if (activePlayer && activePlayer.isOverseas && myTeam.stats.OS >= REQ.OS) {
+        } else if (activePlayer.isOverseas && myTeam.stats.OS >= REQ.OS) {
              btnBid.disabled = true;
              btnBid.innerText = "OS Limit Reached";
         } else {
@@ -417,10 +458,11 @@
         document.getElementById('p-nation').innerText = activePlayer.nation;
         document.getElementById('p-base').innerText = `${activePlayer.basePrice}L XFD`;
         
+        updateDashboard();
         updateAuctionScreen();
+        
         logEvent(`🔥 <strong>${activePlayer.name}</strong> (${roleName} | ${activePlayer.nation}) is up for auction! Base: ${activePlayer.basePrice}L`, 'system');
 
-        // Start bidding war loop
         clearTimeout(bidTimeout);
         bidTimeout = setTimeout(processAIBid, 1500);
     }
@@ -437,7 +479,6 @@
             logEvent(`You bid <strong>${currentBidAmount}L</strong>`, 'bid');
             updateAuctionScreen();
             
-            // Reset hammer timer, let AI react
             clearTimeout(bidTimeout);
             bidTimeout = setTimeout(processAIBid, 1000); 
         }
@@ -448,40 +489,31 @@
         logEvent(`You dropped out of the bidding for ${activePlayer.name}.`, 'system');
         updateAuctionScreen();
         
-        // Speed up AI resolution since user is out
         clearTimeout(bidTimeout);
         processAIBid();
     }
 
     // --- AI LOGIC ---
     function processAIBid() {
-        // AI Teams that can still bid
         let activeAI = teams.filter(t => 
             t.id !== myTeamId && 
             t.id !== highestBidderId && 
             t.roster.length < SQUAD_SIZE
         );
         
-        activeAI.sort(() => Math.random() - 0.5); // Randomize turn order
+        activeAI.sort(() => Math.random() - 0.5); 
         let nextBid = highestBidderId === -1 ? currentBidAmount : currentBidAmount + 5;
         let aiBidPlaced = false;
 
         for (let team of activeAI) {
             if (nextBid > MAX_BID || team.purse < nextBid) continue;
-            
-            // AI Constraints
             if (activePlayer.isOverseas && team.stats.OS >= REQ.OS) continue;
 
-            // AI Decision Making
             let needsRole = team.stats[activePlayer.role] < REQ[activePlayer.role];
-            
-            // Base probability
             let prob = needsRole ? 0.75 : 0.20;
             
-            // Deterrence as price climbs to Max
             prob -= (nextBid / MAX_BID) * 0.4;
 
-            // Deterrence if squad is getting full but purse is low
             let avgPursePerSlot = team.purse / (SQUAD_SIZE - team.roster.length);
             if (nextBid > avgPursePerSlot * 1.5) prob -= 0.3;
 
@@ -489,7 +521,7 @@
                 currentBidAmount = nextBid;
                 highestBidderId = team.id;
                 aiBidPlaced = true;
-                break; // One bid at a time
+                break; 
             }
         }
 
@@ -497,12 +529,10 @@
             logEvent(`<strong>${teams[highestBidderId].name}</strong> bids ${currentBidAmount}L`, 'bid');
             updateAuctionScreen();
             
-            // AI vs AI bidding is faster if user dropped out
             let delay = userHasPassed ? 600 : 1200;
             clearTimeout(bidTimeout);
             bidTimeout = setTimeout(processAIBid, delay);
         } else {
-            // No one bid on this iteration, the hammer falls.
             resolvePlayer();
         }
     }
@@ -515,14 +545,12 @@
             winner.purse -= currentBidAmount;
             winner.roster.push(activePlayer);
             
-            // Update stats
             winner.stats[activePlayer.role]++;
             if (activePlayer.isOverseas) winner.stats.OS++;
             
             logEvent(`🔨 <strong>SOLD!</strong> ${activePlayer.name} goes to ${winner.name} for <strong>${currentBidAmount}L XFD</strong>`, 'sold');
 
             if (highestBidderId === myTeamId) {
-                // Update UI Roster
                 let rosterDiv = document.getElementById('roster-list');
                 let div = document.createElement('div');
                 div.className = 'roster-item';
@@ -532,7 +560,6 @@
             }
         }
 
-        // Wait 2 seconds before the next player walks in
         setTimeout(startNextPlayer, 2500);
     }
 
