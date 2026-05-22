@@ -1,1 +1,444 @@
 
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Champions T20 League - Manager Simulator</title>
+    <style>
+        :root {
+            --primary: #2c3e50;
+            --secondary: #27ae60;
+            --danger: #c0392b;
+            --light: #ecf0f1;
+            --dark: #2c3e50;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f4f7f6;
+            margin: 0;
+            padding: 20px;
+            color: var(--dark);
+        }
+        header {
+            text-align: center;
+            background-color: var(--primary);
+            color: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        .container {
+            display: flex;
+            gap: 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .panel {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .left-panel {
+            flex: 1;
+        }
+        .center-panel {
+            flex: 2;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+        .right-panel {
+            flex: 1;
+            max-height: 600px;
+            overflow-y: auto;
+        }
+        h2 { margin-top: 0; border-bottom: 2px solid var(--light); padding-bottom: 10px; }
+        .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; font-weight: bold; }
+        .stat-box { background: var(--light); padding: 10px; border-radius: 4px; text-align: center; }
+        .player-card {
+            background: #fff;
+            border: 2px solid var(--primary);
+            border-radius: 8px;
+            padding: 30px;
+            margin: 20px 0;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+        .player-name { font-size: 28px; font-weight: bold; color: var(--primary); }
+        .player-role { font-size: 18px; color: #7f8c8d; margin-bottom: 20px; }
+        .bid-amount { font-size: 36px; font-weight: bold; color: var(--secondary); margin: 20px 0; }
+        button {
+            padding: 12px 24px;
+            font-size: 16px;
+            font-weight: bold;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: 0.2s;
+            margin: 5px;
+        }
+        .btn-bid { background-color: var(--secondary); color: white; }
+        .btn-bid:hover { background-color: #219653; }
+        .btn-bid:disabled { background-color: #95a5a6; cursor: not-allowed; }
+        .btn-pass { background-color: var(--danger); color: white; }
+        .btn-pass:hover { background-color: #a93226; }
+        .log-entry { margin-bottom: 8px; font-size: 14px; padding: 5px; border-bottom: 1px solid #eee; }
+        .team-roster { margin-top: 20px; font-size: 14px; }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>Champions T20 League Auction</h1>
+        <p>Manage your club, build your 18-man squad within 10 Crore XFD!</p>
+    </header>
+
+    <div class="container" id="game-container" style="display:none;">
+        
+        <!-- Left: Manager Dashboard -->
+        <div class="panel left-panel">
+            <h2>Your Team: <span id="my-team-name">Mumbai</span></h2>
+            <div class="stats-grid">
+                <div class="stat-box">Purse Left<br><span id="my-purse" style="color:var(--secondary);">1000L</span></div>
+                <div class="stat-box">Squad Size<br><span id="my-squad">0 / 18</span></div>
+            </div>
+            <h3 style="margin-top: 20px;">Requirements</h3>
+            <ul style="list-style: none; padding: 0;">
+                <li>Batsmen (Min 6): <span id="req-bat">0</span></li>
+                <li>Bowlers (Min 6): <span id="req-bowl">0</span></li>
+                <li>All-Rounders (Min 4): <span id="req-ar">0</span></li>
+                <li>Wicketkeepers (Min 2): <span id="req-wk">0</span></li>
+                <li>Overseas (Max 3): <span id="req-os">0</span></li>
+            </ul>
+            <div class="team-roster">
+                <strong>Recent Signings:</strong>
+                <ul id="my-roster-list"></ul>
+            </div>
+        </div>
+
+        <!-- Center: Auction Arena -->
+        <div class="panel center-panel">
+            <h2>Auction Stage</h2>
+            <div id="auction-stage">
+                <div class="player-card">
+                    <div class="player-name" id="current-player-name">Player Name</div>
+                    <div class="player-role" id="current-player-role">Role | Origin</div>
+                    <div style="font-size: 14px;">Base Price: <span id="current-base-price">10L XFD</span></div>
+                    
+                    <div class="bid-amount" id="current-bid">10L XFD</div>
+                    <div id="highest-bidder" style="font-weight:bold; color:var(--primary); margin-bottom:20px;">Highest Bidder: None</div>
+                    
+                    <div>
+                        <button class="btn-bid" id="btn-bid" onclick="playerBid()">Bid (+5L)</button>
+                        <button class="btn-pass" id="btn-pass" onclick="playerPass()">Pass</button>
+                    </div>
+                </div>
+            </div>
+            <div id="auction-over" style="display:none;">
+                <h2>Auction Concluded!</h2>
+                <p>Check the console for full team rosters.</p>
+            </div>
+        </div>
+
+        <!-- Right: Activity Log -->
+        <div class="panel right-panel">
+            <h2>Auction Log</h2>
+            <div id="log-container"></div>
+        </div>
+    </div>
+
+    <!-- Setup Screen -->
+    <div class="container" id="setup-container">
+        <div class="panel" style="width: 100%; text-align: center;">
+            <h2>Welcome to Champions T20 League</h2>
+            <p>Select a city to manage:</p>
+            <select id="team-select" style="padding: 10px; font-size: 16px;">
+                <option value="0">Mumbai</option>
+                <option value="1">Delhi</option>
+                <option value="2">Bengaluru</option>
+                <option value="3">Chennai</option>
+                <option value="4">Kolkata</option>
+                <option value="5">Hyderabad</option>
+                <option value="6">Ahmedabad</option>
+                <option value="7">Lucknow</option>
+                <option value="8">Jaipur</option>
+                <option value="9">Chandigarh</option>
+            </select>
+            <br><br>
+            <button class="btn-bid" onclick="startGame()">Start Auction</button>
+        </div>
+    </div>
+
+<script>
+    // Constants
+    const MAX_BUDGET = 1000; // 1000 Lakhs = 10 Crore
+    const MAX_BID = 200; // 2 Crore
+    const MIN_BID = 10; // 10 Lakhs
+    const TARGET_ROSTER = 18;
+    const REQ = { BAT: 6, BOWL: 6, AR: 4, WK: 2, OS: 3 };
+    
+    // Data Structures
+    const cities = ["Mumbai", "Delhi", "Bengaluru", "Chennai", "Kolkata", "Hyderabad", "Ahmedabad", "Lucknow", "Jaipur", "Chandigarh"];
+    let teams = [];
+    let playersPool = [];
+    
+    // State
+    let myTeamIndex = 0;
+    let currentPlayer = null;
+    let currentBid = 0;
+    let highestBidder = -1;
+    let auctionTimer = null;
+    let playerPassed = false;
+
+    // Generators
+    const firstNames = ["Aarav", "Vihaan", "Aditya", "Rahul", "Rohit", "Virat", "MS", "Jasprit", "Hardik", "Rishabh", "David", "Steve", "Ben", "Kane", "Trent", "Rashid", "Kieron", "Chris", "Sam", "Jofra"];
+    const lastNames = ["Sharma", "Kohli", "Dhoni", "Bumrah", "Pandya", "Pant", "Warner", "Smith", "Stokes", "Williamson", "Boult", "Khan", "Pollard", "Gayle", "Curran", "Archer", "Singh", "Patel", "Kumar", "Yadav"];
+    const roles = ["BAT", "BOWL", "AR", "WK"];
+    
+    function generatePlayers(count) {
+        let pool = [];
+        for (let i = 0; i < count; i++) {
+            let fn = firstNames[Math.floor(Math.random() * firstNames.length)];
+            let ln = lastNames[Math.floor(Math.random() * lastNames.length)];
+            let role = roles[Math.floor(Math.random() * roles.length)];
+            let isOverseas = Math.random() > 0.7; // 30% chance overseas
+            let basePrice = (Math.floor(Math.random() * 4) + 1) * 10; // 10, 20, 30, 40 Lakhs
+            
+            pool.push({
+                id: i,
+                name: `${fn} ${ln}${i}`, // Appended ID to ensure unique names
+                role: role,
+                isOverseas: isOverseas,
+                basePrice: basePrice
+            });
+        }
+        // Shuffle pool
+        return pool.sort(() => Math.random() - 0.5);
+    }
+
+    function initTeams() {
+        teams = cities.map((city, index) => ({
+            id: index,
+            name: city,
+            purse: MAX_BUDGET,
+            roster: [],
+            counts: { BAT: 0, BOWL: 0, AR: 0, WK: 0, OS: 0 }
+        }));
+    }
+
+    function startGame() {
+        myTeamIndex = parseInt(document.getElementById('team-select').value);
+        document.getElementById('setup-container').style.display = 'none';
+        document.getElementById('game-container').style.display = 'flex';
+        document.getElementById('my-team-name').innerText = teams[myTeamIndex].name;
+        
+        initTeams();
+        // Generate enough players for 10 teams * 18 players + buffer
+        playersPool = generatePlayers(300); 
+        
+        updateDashboard();
+        nextPlayer();
+    }
+
+    // Update UI
+    function updateDashboard() {
+        let myTeam = teams[myTeamIndex];
+        document.getElementById('my-purse').innerText = `${myTeam.purse}L XFD`;
+        document.getElementById('my-squad').innerText = `${myTeam.roster.length} / ${TARGET_ROSTER}`;
+        
+        document.getElementById('req-bat').innerText = myTeam.counts.BAT;
+        document.getElementById('req-bat').style.color = myTeam.counts.BAT >= REQ.BAT ? 'green' : 'red';
+        
+        document.getElementById('req-bowl').innerText = myTeam.counts.BOWL;
+        document.getElementById('req-bowl').style.color = myTeam.counts.BOWL >= REQ.BOWL ? 'green' : 'red';
+        
+        document.getElementById('req-ar').innerText = myTeam.counts.AR;
+        document.getElementById('req-ar').style.color = myTeam.counts.AR >= REQ.AR ? 'green' : 'red';
+        
+        document.getElementById('req-wk').innerText = myTeam.counts.WK;
+        document.getElementById('req-wk').style.color = myTeam.counts.WK >= REQ.WK ? 'green' : 'red';
+        
+        document.getElementById('req-os').innerText = myTeam.counts.OS;
+        document.getElementById('req-os').style.color = myTeam.counts.OS <= REQ.OS ? 'green' : 'red';
+
+        // Check if user has completed roster
+        if (myTeam.roster.length >= TARGET_ROSTER) {
+            document.getElementById('btn-bid').disabled = true;
+            document.getElementById('btn-bid').innerText = "Roster Full";
+        } else {
+            // Check purse for next bid
+            if(myTeam.purse < currentBid + 5) {
+                document.getElementById('btn-bid').disabled = true;
+            } else {
+                document.getElementById('btn-bid').disabled = false;
+                document.getElementById('btn-bid').innerText = "Bid (+5L)";
+            }
+        }
+    }
+
+    function log(message) {
+        let logDiv = document.getElementById('log-container');
+        let entry = document.createElement('div');
+        entry.className = 'log-entry';
+        entry.innerText = message;
+        logDiv.prepend(entry);
+    }
+
+    // Auction Logic
+    function nextPlayer() {
+        if (playersPool.length === 0 || checkAllTeamsFull()) {
+            endAuction();
+            return;
+        }
+
+        currentPlayer = playersPool.pop();
+        currentBid = currentPlayer.basePrice;
+        highestBidder = -1;
+        playerPassed = false;
+
+        document.getElementById('current-player-name').innerText = currentPlayer.name;
+        document.getElementById('current-player-role').innerText = `${currentPlayer.role} | ${currentPlayer.isOverseas ? 'Overseas' : 'Indian'}`;
+        document.getElementById('current-base-price').innerText = `${currentPlayer.basePrice}L XFD`;
+        document.getElementById('current-bid').innerText = `${currentBid}L XFD`;
+        document.getElementById('highest-bidder').innerText = `Highest Bidder: None`;
+        document.getElementById('highest-bidder').style.color = 'var(--primary)';
+        
+        document.getElementById('btn-pass').disabled = false;
+        
+        updateDashboard();
+        
+        log(`--- ${currentPlayer.name} is on the block! Base: ${currentBid}L ---`);
+        
+        // Start AI evaluation
+        clearTimeout(auctionTimer);
+        auctionTimer = setTimeout(aiBiddingCycle, 1500);
+    }
+
+    function checkAllTeamsFull() {
+        return teams.every(t => t.roster.length >= TARGET_ROSTER);
+    }
+
+    // User Actions
+    function playerBid() {
+        let myTeam = teams[myTeamIndex];
+        let nextBid = highestBidder === -1 ? currentBid : currentBid + 5;
+        
+        if (myTeam.purse >= nextBid && nextBid <= MAX_BID && myTeam.roster.length < TARGET_ROSTER) {
+            
+            // Validate Overseas Cap
+            if (currentPlayer.isOverseas && myTeam.counts.OS >= REQ.OS) {
+                alert("You have reached the maximum limit of 3 Overseas players.");
+                return;
+            }
+
+            currentBid = nextBid;
+            highestBidder = myTeamIndex;
+            updateAuctionUI();
+            log(`You (Mumbai) bid ${currentBid}L`);
+            
+            clearTimeout(auctionTimer);
+            auctionTimer = setTimeout(aiBiddingCycle, 1000); // Give AI time to respond
+        }
+    }
+
+    function playerPass() {
+        playerPassed = true;
+        document.getElementById('btn-bid').disabled = true;
+        document.getElementById('btn-pass').disabled = true;
+        log(`You passed on ${currentPlayer.name}`);
+        
+        // Fast forward AI bidding
+        clearTimeout(auctionTimer);
+        aiBiddingCycle();
+    }
+
+    function updateAuctionUI() {
+        document.getElementById('current-bid').innerText = `${currentBid}L XFD`;
+        if (highestBidder !== -1) {
+            document.getElementById('highest-bidder').innerText = `Highest Bidder: ${teams[highestBidder].name}`;
+            document.getElementById('highest-bidder').style.color = highestBidder === myTeamIndex ? 'var(--secondary)' : 'var(--danger)';
+        }
+        updateDashboard();
+    }
+
+    // AI Logic
+    function aiBiddingCycle() {
+        let bidderFound = false;
+
+        // Shuffle AI teams to randomize bid order, excluding highest bidder
+        let aiTeams = teams.filter(t => t.id !== myTeamIndex && t.id !== highestBidder && t.roster.length < TARGET_ROSTER);
+        aiTeams = aiTeams.sort(() => Math.random() - 0.5);
+
+        for (let team of aiTeams) {
+            let nextBid = highestBidder === -1 ? currentBid : currentBid + 5;
+            
+            // Max bid cap & Budget cap
+            if (nextBid > MAX_BID || team.purse < nextBid) continue;
+
+            // Check AI constraints
+            if (currentPlayer.isOverseas && team.counts.OS >= REQ.OS) continue;
+
+            // Determine if team NEEDS this role (If they haven't met the cap, high chance. If they have, low chance)
+            let needsRole = team.counts[currentPlayer.role] < REQ[currentPlayer.role];
+            let bidChance = needsRole ? 0.8 : 0.1;
+            
+            // Decrease chance as price gets higher
+            bidChance -= (nextBid / MAX_BID) * 0.5; 
+
+            if (Math.random() < bidChance) {
+                currentBid = nextBid;
+                highestBidder = team.id;
+                bidderFound = true;
+                break;
+            }
+        }
+
+        if (bidderFound) {
+            updateAuctionUI();
+            log(`${teams[highestBidder].name} bids ${currentBid}L`);
+            
+            let delay = playerPassed ? 100 : 1200; // Speed up if player passed
+            clearTimeout(auctionTimer);
+            auctionTimer = setTimeout(aiBiddingCycle, delay);
+        } else {
+            // No one bid
+            resolvePlayer();
+        }
+    }
+
+    function resolvePlayer() {
+        if (highestBidder === -1) {
+            log(`SOLD! ${currentPlayer.name} goes UNSOLD.`);
+        } else {
+            let winningTeam = teams[highestBidder];
+            winningTeam.purse -= currentBid;
+            winningTeam.roster.push(currentPlayer);
+            winningTeam.counts[currentPlayer.role]++;
+            if (currentPlayer.isOverseas) winningTeam.counts.OS++;
+            
+            log(`SOLD! ${currentPlayer.name} sold to ${winningTeam.name} for ${currentBid}L XFD.`);
+
+            // Update UI if user won
+            if (highestBidder === myTeamIndex) {
+                let li = document.createElement('li');
+                li.innerText = `${currentPlayer.name} (${currentPlayer.role}) - ${currentBid}L`;
+                document.getElementById('my-roster-list').appendChild(li);
+                updateDashboard();
+            }
+        }
+
+        setTimeout(nextPlayer, 2000); // 2 second pause before next player
+    }
+
+    function endAuction() {
+        document.getElementById('auction-stage').style.display = 'none';
+        document.getElementById('auction-over').style.display = 'block';
+        console.log("FINAL TEAMS DATA:", teams);
+        log("AUCTION CONCLUDED.");
+    }
+</script>
+
+</body>
+</html>
